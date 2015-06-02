@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <drawable name="bg_color_normal" >#30603060</drawable>
+    <drawable name="bg_color_pressed">#70603060</drawable>
+</resources>
