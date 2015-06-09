@@ -6,18 +6,14 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -60,12 +56,11 @@ public class PreludeChoice extends Fragment {
     TextView upToTime;
     Button addBtn;
     Button delBtn;
-    Button mvUpBtn;
-    Button mvDownBtn;
+    ImageButton mvUpBtn;
+    ImageButton mvDownBtn;
 
-    List<MusicCatalog.Song> songList;
-    List<String> songListStr;
-    ArrayAdapter songListViewAdapter;
+    List<Song> songList;
+    SongListArrayAdapter songListViewAdapter;
     Runnable updateListRunnable;
     Handler handler;
     PreludePLItem preludePLItem;
@@ -107,48 +102,31 @@ public class PreludeChoice extends Fragment {
         upToTime = (TextView) rootView.findViewById(R.id.up_to_time);
         addBtn = (Button) rootView.findViewById(R.id.add_btn);
         delBtn = (Button) rootView.findViewById(R.id.remove_btn);
-        mvUpBtn = (Button) rootView.findViewById(R.id.move_up);
-        mvDownBtn = (Button) rootView.findViewById(R.id.move_down);
+        mvUpBtn = (ImageButton) rootView.findViewById(R.id.move_up);
+        mvDownBtn = (ImageButton) rootView.findViewById(R.id.move_down);
 
-        songListStr = new ArrayList<String>(); // initially empty
-        songListViewAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_activated_1, hymnListStr);
+        songList = new ArrayList<Song>();
+
+        MusicCatalog mc = MusicCatalog.getInstance();
+        mc.refreshMusicCatalog();
+        int max = 4;
+        for (Song s : mc.allSongs) {
+            songList.add(s);
+            if (--max == 0) {
+                break;
+            }
+        }
+
+        songListViewAdapter = new SongListArrayAdapter(getActivity(), songList);
         preludeLV.setAdapter(songListViewAdapter);
         preludeLV.setClickable(true);
 
         updateListRunnable = new UpdateSongListRunnable();
 
-        hymnEntry.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) { }
+        handler.removeCallbacks(updateListRunnable);
+        handler.post(updateListRunnable);
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                Log.d(TAG, "in onTextChanged()");
-                handler.removeCallbacks(updateListRunnable);
-                if (charSequence.length() >= MAX_HYMN_DIGITS) {
-                    handler.post(updateListRunnable);
-                } else {
-                    handler.postDelayed(updateListRunnable, 100);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) { }
-        });
-
-        hymnEntry.setOnEditorActionListener(
-                new EditText.OnEditorActionListener() {
-                    @Override
-                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                        if (actionId == EditorInfo.IME_ACTION_DONE) {
-                            done();
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-
-        doneButton.setOnClickListener(new View.OnClickListener() {
+        okayBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 done();
@@ -156,11 +134,10 @@ public class PreludeChoice extends Fragment {
         });
 
         List<PlayListItemBase> pl = mainActyCallbacks.getPlayList();
-        hymnPlayListItem = (HymnPlayListItem) pl.get(getArguments().getInt("index", 0));
+        preludePLItem = (PreludePLItem) pl.get(getArguments().getInt("index", 0));
 
         return rootView;
     }
-
 
     @Override
     public void onAttach(Activity activity) {
@@ -169,70 +146,52 @@ public class PreludeChoice extends Fragment {
         mainActyCallbacks = (MainActyCallbacks) activity;
     }
 
-//    @Override
-//    public void onAttach(Activity activity) {
-//        super.onAttach(activity);
-//        try {
-//            mListener = (OnFragmentInteractionListener) activity;
-//        } catch (ClassCastException e) {
-//            throw new ClassCastException(activity.toString()
-//                    + " must implement OnFragmentInteractionListener");
-//        }
-//    }
-
     @Override
     public void onResume() {
         super.onResume();
-        InputMethodManager imm = (InputMethodManager) getActivity()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(hymnEntry, InputMethodManager.SHOW_IMPLICIT);
     }
 
     class UpdateSongListRunnable implements Runnable {
         @Override
         public void run() {
-            Log.d(TAG, "in UpdateSongListRunnable.run()");
-            String hymnNumStr = hymnEntry.getText().toString();
-            Log.d(TAG, "hymnNumStr = " + hymnNumStr);
-            try {
-                int hymnNum = Integer.parseInt(hymnNumStr);
-                hymnList = MusicCatalog.getInstance().getHymns(hymnNum);
-                if (hymnList.isEmpty()) {
-                    // empty out hymn list
-                    hymnListStr.clear();
-                    hymnListViewAdapter.notifyDataSetChanged();
-                } else {
-                    hymnListStr.clear();
-                    for (MusicCatalog.Hymn h : hymnList) {
-                        Log.d(TAG, "Found hymn " + h.title);
-                        hymnListStr.add(h.title);
-                    }
-                    hymnListViewAdapter.notifyDataSetChanged();
-                    hymnListView.setItemChecked(0, true);
-                }
-            } catch (NumberFormatException e) {}
+            Log.d(TAG, "in UpdateSongListRunnable.run() " + songList.size() + "items");
+            songListViewAdapter.notifyDataSetChanged();
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        //mListener = null;
     }
 
     void done() {
-        if (hymnList == null || hymnList.isEmpty()) {
-            Log.d(TAG, "No matching hymns");
-            return;
-        }
-        int chosenIdx = hymnListView.getCheckedItemPosition();
-        Log.d(TAG, "Selected item position is "+ chosenIdx);
-        if (chosenIdx >= 0 && chosenIdx < hymnList.size()) {
-            MusicCatalog.Hymn chosen = hymnList.get(chosenIdx);
-            hymnPlayListItem.setHymn(chosen);
-            mainActyCallbacks.onSongChoiceDone();
-        }
+        preludePLItem.setSongList(songList);
+        mainActyCallbacks.onSongChoiceDone();
     }
 
-    //TODO: preview and cancel button
+    class SongListArrayAdapter extends ArrayAdapter<Song> {
+        static final int LAYOUT_ID = R.layout.list_item_song;
+        public SongListArrayAdapter(Context context, List<Song> objects) {
+            super(context, LAYOUT_ID, R.id.text1, objects);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Log.d(TAG, "getView for item at " + position);
+            View v = convertView;
+            if (v == null) {
+                LayoutInflater li = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = li.inflate(LAYOUT_ID, null);
+            }
+            TextView line1 = (TextView) v.findViewById(R.id.text1);
+            TextView line2 = (TextView) v.findViewById(R.id.text2);
+            Song s = getItem(position);
+            int duration = (s.getTrackLengthMillis() + 500) / 1000;
+            String durationStr = (duration / 60) + ":" + (duration % 60);
+            String l1 = s.title + " (" + durationStr + ")";
+            line1.setText(l1);
+            line2.setText(s.album);
+            return v;
+        }
+    }
 }

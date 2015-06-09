@@ -1,15 +1,14 @@
 package com.cawlfield.topher.servicemusicplayer;
 
 import android.app.Fragment;
-import android.content.ContentUris;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.PowerManager;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -33,7 +32,9 @@ import java.util.List;
 
 public class PreludePLItem extends PlayListItemBase {
     private static String TAG = PreludePLItem.class.getSimpleName();
-    private MusicCatalog.Song song;
+    private List<Song> songList;
+    private int durationTotal = 0;
+    private Calendar timeToFinish;
     MediaPlayer mediaPlayer;
 
     public PreludePLItem(MainActyCallbacks callback) {
@@ -53,18 +54,30 @@ public class PreludePLItem extends PlayListItemBase {
         return pc;
     }
 
-    public void setSong(MusicCatalog.Song song) {
-        this.song = song;
-        setTitle(song.title);
+    public void setSongList(List<Song> sl) {
+        songList = sl;
+        if (sl == null || sl.size() < 1) {
+            setTitle("No Preludes Selected");
+            setInfo("Tap to select preludes");
+            durationTotal = 0;
+        } else {
+            setTitle(sl.size() + " songs");
+            durationTotal = 0;
+            for (Song s : songList) {
+                durationTotal += s.getTrackLengthMillis();
+            }
+            int secs = (durationTotal + 500) / 1000;
+            setInfo("total time " + (secs/60) + ":" + (secs % 60));
+        }
         // TODO: info could show song length
-        setInfo("Tap to change");
         //mainCallback.onSongChoiceDone();
     }
 
     public boolean play(Context ct) {
-        if (null == song) {
+        if (null == songList || songList.size() < 1) {
             return false;
         }
+        Song song = songList.get(0);
         if (null == mediaPlayer) {
             mediaPlayer = new MediaPlayer();
         }

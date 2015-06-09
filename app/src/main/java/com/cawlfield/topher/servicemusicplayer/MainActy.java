@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
@@ -37,13 +38,16 @@ import java.util.List;
 public class MainActy extends Activity
     implements MainActyCallbacks {
 
-    private static String TAG = "MainActy";
+    private static final String TAG = MainActy.class.getSimpleName();
     private List<PlayListItemBase> playList;
+    private static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "in onCreate()");
+
+        MainActy.context = getApplicationContext();
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // TODO: Add screen dimming. See http://stackoverflow.com/questions/4803248/dim-screen-while-user-inactive
@@ -116,12 +120,20 @@ public class MainActy extends Activity
         InputMethodManager inputManager = (InputMethodManager)
             getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
-            InputMethodManager.HIDE_NOT_ALWAYS);
+        View cf = getCurrentFocus();
+        if (cf != null) {
+            inputManager.hideSoftInputFromWindow(cf.getWindowToken(),
+                    InputMethodManager.HIDE_NOT_ALWAYS);
+        }
     }
 
     @Override
     public List<PlayListItemBase> getPlayList() {
         return playList;
     }
+
+    public static Context getAppContext() {
+        return MainActy.context;
+    }
+
 }

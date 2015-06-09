@@ -20,7 +20,6 @@
 package com.cawlfield.topher.servicemusicplayer;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -58,20 +57,7 @@ public class MusicCatalog {
         context = ct;
     }
 
-    class Song {
-        String album;
-        String title;
-        String artist;
-        int track;
-        long id;
-
-        Uri getUri() {
-            return ContentUris.withAppendedId(
-                    android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-        }
-    }
-
-    class Hymn extends Song {
+    static class Hymn extends Song {
         int number;
     }
 
@@ -99,15 +85,15 @@ public class MusicCatalog {
         };
         // Sqlite3 is case-insensitive here;
         String selection = android.provider.MediaStore.Audio.Media.IS_MUSIC + " = 1 AND "
-            + android.provider.MediaStore.Audio.Media.ALBUM + " like '%hymnal%' AND "
-            + android.provider.MediaStore.Audio.Media.TITLE + " like '%hymn%'";
+                + android.provider.MediaStore.Audio.Media.ALBUM + " like '%hymnal%' AND "
+                + android.provider.MediaStore.Audio.Media.TITLE + " like '%hymn%'";
         Cursor cursor = contentResolver.query(uri, columns, selection, null, null);
         if (cursor == null) {
             // query failed, handle error.
         } else if (!cursor.moveToFirst()) {
             // no media on the device
         } else {
-            int count=0;
+            int count = 0;
             do {
                 long thisId = cursor.getLong(0);
                 String title = cursor.getString(1);
@@ -117,7 +103,7 @@ public class MusicCatalog {
                 //Log.i(TAG, "t="+title+" a="+album+" trk="+track);
                 Matcher m = pat.matcher(title);
                 if (count++ < 10) {
-                    Log.d(TAG, "found hymn "+ title);
+                    Log.d(TAG, "found hymn " + title);
                 }
                 if (m.find()) {
                     Hymn h = new Hymn();
@@ -134,20 +120,40 @@ public class MusicCatalog {
                             Log.d(TAG, "  (uri " + h.getUri() + ")");
                         }
                     } catch (NumberFormatException e) {
-                        Log.e(TAG, "Could not interpret '"+m.group(1)+"' as an integer.");
-                    }
-                } else {
-                    Song s = new Song();
-                    s.title = title;
-                    s.album = album;
-                    s.artist = artist;
-                    s.track = track;
-                    s.id = thisId;
-                    allSongs.add(s);
-                    if (songsByAlbum.containsKey(album)) {
-
+                        Log.e(TAG, "Could not interpret '" + m.group(1) + "' as an integer.");
                     }
                 }
+            } while (cursor.moveToNext());
+        }
+
+        selection = android.provider.MediaStore.Audio.Media.IS_MUSIC + " = 1 AND "
+                + android.provider.MediaStore.Audio.Media.ALBUM + " NOT like '%hymnal%'";
+        cursor = contentResolver.query(uri, columns, selection, null, null);
+        if (cursor == null) {
+            // query failed, handle error.
+        } else if (!cursor.moveToFirst()) {
+            // no media on the device
+        } else {
+            int count = 0;
+            do {
+                long thisId = cursor.getLong(0);
+                String title = cursor.getString(1);
+                String album = cursor.getString(2);
+                int track = cursor.getInt(3);
+                String artist = cursor.getString(4);
+
+                Log.d(TAG, "New song: " + title);
+                Song s = new Song();
+                s.title = title;
+                s.album = album;
+                s.artist = artist;
+                s.track = track;
+                s.id = thisId;
+                allSongs.add(s);
+                if (!songsByAlbum.containsKey(album)) {
+                    songsByAlbum.put(album, new ArrayList<Song>());
+                }
+                songsByAlbum.get(album).add(s);
             } while (cursor.moveToNext());
         }
     }
