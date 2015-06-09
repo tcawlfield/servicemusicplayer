@@ -1,23 +1,30 @@
 package com.cawlfield.topher.servicemusicplayer;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 
@@ -44,7 +51,7 @@ import java.util.List;
  * A simple {@link Fragment} subclass.
  *
  */
-public class PreludeChoice extends Fragment {
+public class PreludeChoice extends Fragment implements View.OnClickListener {
 
     private static int MAX_HYMN_DIGITS = 3;
     private static String TAG = PreludeChoice.class.getSimpleName();
@@ -65,6 +72,10 @@ public class PreludeChoice extends Fragment {
     Handler handler;
     PreludePLItem preludePLItem;
     MainActyCallbacks mainActyCallbacks;
+
+    int endHour = 19;
+    int endMinute = 30;
+    int targetDurSeconds = 10 * 60;
 
     List<String> songListStr;
 
@@ -126,15 +137,19 @@ public class PreludeChoice extends Fragment {
         handler.removeCallbacks(updateListRunnable);
         handler.post(updateListRunnable);
 
-        okayBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                done();
-            }
-        });
+        endTimeTV.setOnClickListener(this);
+        okayBtn.setOnClickListener(this);
+        randomizeBtn.setOnClickListener(this);
+        upToTime.setOnClickListener(this);
+        addBtn.setOnClickListener(this);
+        delBtn.setOnClickListener(this);
+        mvUpBtn.setOnClickListener(this);
+        mvDownBtn.setOnClickListener(this);
 
         List<PlayListItemBase> pl = mainActyCallbacks.getPlayList();
         preludePLItem = (PreludePLItem) pl.get(getArguments().getInt("index", 0));
+
+        updateStartTime();
 
         return rootView;
     }
@@ -149,6 +164,17 @@ public class PreludeChoice extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view == endTimeTV) {
+            showEndTimePickerDialog();
+        } else if (view == okayBtn) {
+            done();
+        } else if (view == addBtn) {
+
+        }
     }
 
     class UpdateSongListRunnable implements Runnable {
@@ -193,5 +219,51 @@ public class PreludeChoice extends Fragment {
             line2.setText(s.album);
             return v;
         }
+    }
+
+    public void showEndTimePickerDialog() {
+        EndTimePickerFragment newFragment = new EndTimePickerFragment();
+        newFragment.setPlC(this);
+        newFragment.show(getFragmentManager(), "timePicker");
+    }
+
+    public static class EndTimePickerFragment extends DialogFragment
+            implements TimePickerDialog.OnTimeSetListener {
+        private PreludeChoice plc;
+
+        public void setPlC(PreludeChoice plc) {
+            this.plc = plc;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the current time as the default values for the picker
+            //final Calendar c = Calendar.getInstance();
+            int hour = plc.endHour;
+            int minute = plc.endMinute;
+
+            // Create a new instance of TimePickerDialog and return it
+            return new TimePickerDialog(getActivity(), this, hour, minute,
+                    DateFormat.is24HourFormat(getActivity()));
+        }
+
+        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+            plc.endHour = hourOfDay;
+            plc.endMinute = minute;
+            plc.updateStartTime();
+        }
+    }
+
+    void updateStartTime() {
+        java.text.DateFormat df;
+        if (DateFormat.is24HourFormat(getActivity())) {
+            df = new SimpleDateFormat("HH:mm");
+        } else {
+            df = new SimpleDateFormat("KK:mm a");
+        }
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, endHour);
+        cal.set(Calendar.MINUTE, endMinute);
+        endTimeTV.setText(df.format(cal.getTime()));
     }
 }
