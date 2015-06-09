@@ -2,4 +2,5 @@
 <resources>
     <drawable name="bg_color_normal" >#30603060</drawable>
     <drawable name="bg_color_pressed">#70603060</drawable>
+    <color name="dark_bkg">#252030</color>
 </resources>

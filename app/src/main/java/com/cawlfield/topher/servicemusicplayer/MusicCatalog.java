@@ -24,10 +24,13 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +42,8 @@ public class MusicCatalog {
     static private MusicCatalog instance = null;
     private Context context = null;
     List<Hymn> allHymns;
+    List<Song> allSongs; // non-hymn music
+    Map<String, List<Song>> songsByAlbum;
 
     protected MusicCatalog() {}
 
@@ -53,10 +58,11 @@ public class MusicCatalog {
         context = ct;
     }
 
-    class Hymn {
-        int number;
+    class Song {
         String album;
         String title;
+        String artist;
+        int track;
         long id;
 
         Uri getUri() {
@@ -65,18 +71,31 @@ public class MusicCatalog {
         }
     }
 
-    void getAllHymns() {
-        Log.d(TAG, "in getAllHymns()");
-        allHymns = new ArrayList<Hymn>();
+    class Hymn extends Song {
+        int number;
+    }
+
+    void refreshMusicCatalog() {
+        Log.d(TAG, "in refreshMusicCatalog()");
+        if (allHymns == null) {
+            allHymns = new ArrayList<Hymn>();
+            allSongs = new ArrayList<Song>();
+            songsByAlbum = new HashMap<String, List<Song>>();
+        } else {
+            allHymns.clear();
+            allSongs.clear();
+            songsByAlbum.clear();
+        }
         Pattern pat = Pattern.compile("hymn\\s*(\\d{1,3})", Pattern.CASE_INSENSITIVE);
 
         ContentResolver contentResolver = context.getContentResolver();
         Uri uri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String[] columns = {
-                android.provider.MediaStore.Audio.Media._ID,   // 0
-                android.provider.MediaStore.Audio.Media.TITLE, // 1
-                android.provider.MediaStore.Audio.Media.ALBUM, // 2
-                android.provider.MediaStore.Audio.Media.TRACK  // 3
+                MediaStore.Audio.Media._ID,   // 0
+                MediaStore.Audio.Media.TITLE, // 1
+                MediaStore.Audio.Media.ALBUM, // 2
+                MediaStore.Audio.Media.TRACK, // 3
+                MediaStore.Audio.Media.ARTIST // 4
         };
         // Sqlite3 is case-insensitive here;
         String selection = android.provider.MediaStore.Audio.Media.IS_MUSIC + " = 1 AND "
@@ -93,7 +112,8 @@ public class MusicCatalog {
                 long thisId = cursor.getLong(0);
                 String title = cursor.getString(1);
                 String album = cursor.getString(2);
-                String track = cursor.getString(3);
+                int track = cursor.getInt(3);
+                String artist = cursor.getString(4);
                 //Log.i(TAG, "t="+title+" a="+album+" trk="+track);
                 Matcher m = pat.matcher(title);
                 if (count++ < 10) {
@@ -110,8 +130,22 @@ public class MusicCatalog {
                         if (count < 11) {
                             Log.d(TAG, "  (number " + h.number + ")");
                         }
+                        if (count < 11) {
+                            Log.d(TAG, "  (uri " + h.getUri() + ")");
+                        }
                     } catch (NumberFormatException e) {
                         Log.e(TAG, "Could not interpret '"+m.group(1)+"' as an integer.");
+                    }
+                } else {
+                    Song s = new Song();
+                    s.title = title;
+                    s.album = album;
+                    s.artist = artist;
+                    s.track = track;
+                    s.id = thisId;
+                    allSongs.add(s);
+                    if (songsByAlbum.containsKey(album)) {
+
                     }
                 }
             } while (cursor.moveToNext());
@@ -120,7 +154,7 @@ public class MusicCatalog {
 
     List<Hymn> getHymns(int hymnNum) {
         if (null == allHymns) {
-            getAllHymns();
+            refreshMusicCatalog();
         }
 
         List<Hymn> matchingHymns = new ArrayList<Hymn>();

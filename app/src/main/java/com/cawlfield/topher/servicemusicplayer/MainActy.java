@@ -46,8 +46,10 @@ public class MainActy extends Activity
         Log.d(TAG, "in onCreate()");
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // TODO: Add screen dimming. See http://stackoverflow.com/questions/4803248/dim-screen-while-user-inactive
 
         playList = new ArrayList<PlayListItemBase>(10);
+        playList.add(new PreludePLItem(this));
         playList.add(new HymnPlayListItem(this));
         playList.add(new HymnPlayListItem(this));
         playList.add(new HymnPlayListItem(this));

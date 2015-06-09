@@ -31,40 +31,38 @@ import java.util.List;
  *   along with ServiceMusicPlayer.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-public class HymnPlayListItem extends PlayListItemBase {
-    private static int itemCount = 0;
-    private int thisItemNum;
-    private static String TAG = HymnPlayListItem.class.getSimpleName();
-    private MusicCatalog.Hymn hymn;
+public class PreludePLItem extends PlayListItemBase {
+    private static String TAG = PreludePLItem.class.getSimpleName();
+    private MusicCatalog.Song song;
     MediaPlayer mediaPlayer;
 
-    public HymnPlayListItem(MainActyCallbacks callback) {
+    public PreludePLItem(MainActyCallbacks callback) {
         super(callback);
-        thisItemNum = ++itemCount;
         initNoSong();
     }
 
     @Override
     public void initNoSong() {
-        setTitle("No Hymn Selected");
-        setInfo("Tap to select a hymn number");
+        setTitle("No Preludes Selected");
+        setInfo("Tap to select preludes");
     }
 
     @Override
     public Fragment getSongChoiceFragment(int idx) {
-        Fragment hc = HymnChoice.newInstance(idx);
-        return hc;
+        Fragment pc = PreludeChoice.newInstance(idx);
+        return pc;
     }
 
-    public void setHymn(MusicCatalog.Hymn hymn) {
-        this.hymn = hymn;
-        setTitle(hymn.title);
+    public void setSong(MusicCatalog.Song song) {
+        this.song = song;
+        setTitle(song.title);
+        // TODO: info could show song length
         setInfo("Tap to change");
         //mainCallback.onSongChoiceDone();
     }
 
     public boolean play(Context ct) {
-        if (null == hymn) {
+        if (null == song) {
             return false;
         }
         if (null == mediaPlayer) {
@@ -75,7 +73,7 @@ public class HymnPlayListItem extends PlayListItemBase {
             return false;
         }
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        Uri contentUri = hymn.getUri();
+        Uri contentUri = song.getUri();
 
         try {
             mediaPlayer.setDataSource(ct, contentUri);

@@ -8,5 +8,12 @@
     <string name="preview_hymn">Preview Hymn Choice</string>
     <string name="play">Play</string>
     <string name="stop">Stop</string>
+    <string name="end_time_txt">End time:</string>
+    <string name="ramdomize">Randomize</string>
+    <string name="up_to">up to</string>
+    <string name="add">Add</string>
+    <string name="delete">Remove</string>
+    <string name="move">Move:</string>
+    <string name="prelude_edit_title">Add Preludes</string>
 
 </resources>
