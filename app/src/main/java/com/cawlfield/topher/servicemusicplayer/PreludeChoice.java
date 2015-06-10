@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -134,9 +135,6 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
 
         updateListRunnable = new UpdateSongListRunnable();
 
-        handler.removeCallbacks(updateListRunnable);
-        handler.post(updateListRunnable);
-
         endTimeTV.setOnClickListener(this);
         okayBtn.setOnClickListener(this);
         randomizeBtn.setOnClickListener(this);
@@ -146,11 +144,6 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         mvUpBtn.setOnClickListener(this);
         mvDownBtn.setOnClickListener(this);
 
-        List<PlayListItemBase> pl = mainActyCallbacks.getPlayList();
-        preludePLItem = (PreludePLItem) pl.get(getArguments().getInt("index", 0));
-
-        updateStartTime();
-
         return rootView;
     }
 
@@ -158,12 +151,21 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
+        List<PlayListItemBase> pl = mainActyCallbacks.getPlayList();
+        preludePLItem = (PreludePLItem) pl.get(getArguments().getInt("index", 0));
+
         mainActyCallbacks = (MainActyCallbacks) activity;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        handler.removeCallbacks(updateListRunnable);
+        handler.post(updateListRunnable);
+
+        updateStartTime();
+        updateUpToTime();
     }
 
     @Override
@@ -173,7 +175,15 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         } else if (view == okayBtn) {
             done();
         } else if (view == addBtn) {
-
+            addASong();
+        } else if (view == delBtn) {
+            delSong();
+        } else if (view == mvUpBtn) {
+            moveSong(true);
+        } else if (view == mvDownBtn) {
+            moveSong(false);
+        } else if (view == upToTime) {
+            showUpToTimePickerDialog();
         }
     }
 
@@ -193,6 +203,45 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     void done() {
         preludePLItem.setSongList(songList);
         mainActyCallbacks.onSongChoiceDone();
+    }
+
+    void addASong() {
+
+    }
+
+    void delSong() {
+        Log.d(TAG, "delSong()");
+        if (songList != null && songList.size() > 0) {
+            int pos = preludeLV.getCheckedItemPosition();
+            if (pos != AdapterView.INVALID_POSITION) {
+                songList.remove(pos);
+                songListViewAdapter.notifyDataSetChanged();
+                //preludeLV.dispatchSetSelected(false);
+            }
+        }
+    }
+
+    void moveSong(boolean moveUp) {
+        Log.d(TAG, "moveSong(moveUp="+moveUp+")");
+        if (songList != null && songList.size() > 1) {
+            int pos = preludeLV.getCheckedItemPosition();
+            if (pos != AdapterView.INVALID_POSITION) {
+                int newPos;
+                if (moveUp && pos > 0) {
+                    newPos = pos - 1;
+                } else if (! moveUp && pos+1 < songList.size()) {
+                    newPos = pos + 1;
+                } else {
+                    return;
+                }
+                Song moving = songList.get(pos);
+                songList.remove(pos);
+                songList.add(newPos, moving);
+                songListViewAdapter.notifyDataSetChanged();
+                preludeLV.setItemChecked(pos, false);
+                preludeLV.setItemChecked(newPos, true);
+            }
+        }
     }
 
     class SongListArrayAdapter extends ArrayAdapter<Song> {
@@ -265,5 +314,13 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         cal.set(Calendar.HOUR_OF_DAY, endHour);
         cal.set(Calendar.MINUTE, endMinute);
         endTimeTV.setText(df.format(cal.getTime()));
+    }
+
+    void updateUpToTime() {
+        upToTime.setText((targetDurSeconds/60)+":"+(targetDurSeconds%60));
+    }
+
+    void showUpToTimePickerDialog() {
+
     }
 }
