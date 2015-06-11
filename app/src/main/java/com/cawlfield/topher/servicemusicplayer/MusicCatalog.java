@@ -27,9 +27,11 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,6 +45,7 @@ public class MusicCatalog {
     List<Hymn> allHymns;
     List<Song> allSongs; // non-hymn music
     Map<String, List<Song>> songsByAlbum;
+    List<String> albumNames;
 
     protected MusicCatalog() {}
 
@@ -156,6 +159,9 @@ public class MusicCatalog {
                 songsByAlbum.get(album).add(s);
             } while (cursor.moveToNext());
         }
+        Set<String> albums = songsByAlbum.keySet();
+        albumNames = new ArrayList<String>(albums);
+        Collections.sort(albumNames);
     }
 
     List<Hymn> getHymns(int hymnNum) {
@@ -170,5 +176,23 @@ public class MusicCatalog {
             }
         }
         return matchingHymns;
+    }
+
+    List<String> getAlbums() {
+        if (null == allSongs) {
+            refreshMusicCatalog();
+        }
+        return albumNames;
+    }
+
+    List<Song> getSongsByAlbum(String album) {
+        if (null == allSongs) {
+            refreshMusicCatalog();
+        }
+        if (songsByAlbum.containsKey(album)) {
+            return null;
+        } else {
+            return songsByAlbum.get(album);
+        }
     }
 }

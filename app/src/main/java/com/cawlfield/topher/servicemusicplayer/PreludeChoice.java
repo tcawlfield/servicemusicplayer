@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.TimePickerDialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.os.Handler;
@@ -15,7 +14,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -25,7 +23,6 @@ import android.widget.TimePicker;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 
@@ -206,7 +203,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     }
 
     void addASong() {
-
+        AddSongFragment nextFrag = AddSongFragment.newInstance(this);
+        nextFrag.show(getFragmentManager(), "addSong");
     }
 
     void delSong() {
@@ -241,32 +239,6 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
                 preludeLV.setItemChecked(pos, false);
                 preludeLV.setItemChecked(newPos, true);
             }
-        }
-    }
-
-    class SongListArrayAdapter extends ArrayAdapter<Song> {
-        static final int LAYOUT_ID = R.layout.list_item_song;
-        public SongListArrayAdapter(Context context, List<Song> objects) {
-            super(context, LAYOUT_ID, R.id.text1, objects);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            Log.d(TAG, "getView for item at " + position);
-            View v = convertView;
-            if (v == null) {
-                LayoutInflater li = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = li.inflate(LAYOUT_ID, null);
-            }
-            TextView line1 = (TextView) v.findViewById(R.id.text1);
-            TextView line2 = (TextView) v.findViewById(R.id.text2);
-            Song s = getItem(position);
-            int duration = (s.getTrackLengthMillis() + 500) / 1000;
-            String durationStr = (duration / 60) + ":" + (duration % 60);
-            String l1 = s.title + " (" + durationStr + ")";
-            line1.setText(l1);
-            line2.setText(s.album);
-            return v;
         }
     }
 
@@ -322,5 +294,22 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
 
     void showUpToTimePickerDialog() {
 
+    }
+
+    void addThisSong(Song song) {
+        if (songList == null) {
+            Log.e(TAG, "sond list is null!");
+        }
+        int insertPos = 0;
+        if (songList.size() > 0) {
+            insertPos = preludeLV.getCheckedItemPosition();
+            if (insertPos == AdapterView.INVALID_POSITION) {
+                insertPos = songList.size();
+            } else {
+                insertPos += 1;
+            }
+        }
+        songList.add(insertPos, song);
+        songListViewAdapter.notifyDataSetChanged();
     }
 }

@@ -15,5 +15,8 @@
     <string name="delete">Remove</string>
     <string name="move">Move:</string>
     <string name="prelude_edit_title">Add Preludes</string>
+    <string name="add_song_fragment_title">Add Song</string>
+    <string name="album">Album:</string>
+    <string name="cancel">Cancel</string>
 
 </resources>
