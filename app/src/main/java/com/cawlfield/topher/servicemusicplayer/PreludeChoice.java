@@ -63,6 +63,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     Button delBtn;
     ImageButton mvUpBtn;
     ImageButton mvDownBtn;
+    TextView totalTime;
 
     List<Song> songList;
     SongListArrayAdapter songListViewAdapter;
@@ -113,24 +114,13 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         delBtn = (Button) rootView.findViewById(R.id.remove_btn);
         mvUpBtn = (ImageButton) rootView.findViewById(R.id.move_up);
         mvDownBtn = (ImageButton) rootView.findViewById(R.id.move_down);
+        totalTime = (TextView) rootView.findViewById(R.id.total_time);
 
         songList = new ArrayList<Song>();
-
-        MusicCatalog mc = MusicCatalog.getInstance();
-        mc.refreshMusicCatalog();
-        int max = 4;
-        for (Song s : mc.allSongs) {
-            songList.add(s);
-            if (--max == 0) {
-                break;
-            }
-        }
 
         songListViewAdapter = new SongListArrayAdapter(getActivity(), songList);
         preludeLV.setAdapter(songListViewAdapter);
         preludeLV.setClickable(true);
-
-        updateListRunnable = new UpdateSongListRunnable();
 
         endTimeTV.setOnClickListener(this);
         okayBtn.setOnClickListener(this);
@@ -148,10 +138,10 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
+        mainActyCallbacks = (MainActyCallbacks) activity;
+
         List<PlayListItemBase> pl = mainActyCallbacks.getPlayList();
         preludePLItem = (PreludePLItem) pl.get(getArguments().getInt("index", 0));
-
-        mainActyCallbacks = (MainActyCallbacks) activity;
     }
 
     @Override
@@ -163,6 +153,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
 
         updateStartTime();
         updateUpToTime();
+        updateTotalTime();
     }
 
     @Override
@@ -181,14 +172,6 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
             moveSong(false);
         } else if (view == upToTime) {
             showUpToTimePickerDialog();
-        }
-    }
-
-    class UpdateSongListRunnable implements Runnable {
-        @Override
-        public void run() {
-            Log.d(TAG, "in UpdateSongListRunnable.run() " + songList.size() + "items");
-            songListViewAdapter.notifyDataSetChanged();
         }
     }
 
@@ -214,6 +197,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
             if (pos != AdapterView.INVALID_POSITION) {
                 songList.remove(pos);
                 songListViewAdapter.notifyDataSetChanged();
+                updateTotalTime();
                 //preludeLV.dispatchSetSelected(false);
             }
         }
@@ -236,6 +220,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
                 songList.remove(pos);
                 songList.add(newPos, moving);
                 songListViewAdapter.notifyDataSetChanged();
+                updateTotalTime();
                 preludeLV.setItemChecked(pos, false);
                 preludeLV.setItemChecked(newPos, true);
             }
@@ -289,7 +274,15 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     }
 
     void updateUpToTime() {
-        upToTime.setText((targetDurSeconds/60)+":"+(targetDurSeconds%60));
+        upToTime.setText(MinSec.toString(targetDurSeconds * 1000));
+    }
+
+    void updateTotalTime() {
+        int millis = 0;
+        for (Song s : songList) {
+            millis += s.getTrackLengthMillis();
+        }
+        totalTime.setText(MinSec.toString(millis));
     }
 
     void showUpToTimePickerDialog() {
@@ -309,7 +302,10 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
                 insertPos += 1;
             }
         }
+        Log.d(TAG, "Adding song " + song.title + " to position " + insertPos);
         songList.add(insertPos, song);
+        Log.d(TAG, "Now we have " + songList.size() + " songs!");
         songListViewAdapter.notifyDataSetChanged();
+        updateTotalTime();
     }
 }

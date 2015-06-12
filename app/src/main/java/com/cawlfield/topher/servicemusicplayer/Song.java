@@ -50,7 +50,9 @@ class Song {
             Log.e(TAG, "Must use prepareAsync for this media type -- probably streaming:" + title);
             duration = -1;
         }
+        mediaPlayer.reset();
         mediaPlayer.release();
+        mediaPlayer = null;
         return duration;
     }
 }

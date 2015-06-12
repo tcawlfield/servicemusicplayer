@@ -190,9 +190,9 @@ public class MusicCatalog {
             refreshMusicCatalog();
         }
         if (songsByAlbum.containsKey(album)) {
-            return null;
-        } else {
             return songsByAlbum.get(album);
+        } else {
+            return null;
         }
     }
 }

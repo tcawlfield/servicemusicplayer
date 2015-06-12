@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -23,7 +24,6 @@ class SongListArrayAdapter extends ArrayAdapter<Song> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        Log.d(TAG, "getView for item at " + position);
         View v = convertView;
         if (v == null) {
             LayoutInflater li = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -31,12 +31,11 @@ class SongListArrayAdapter extends ArrayAdapter<Song> {
         }
         TextView line1 = (TextView) v.findViewById(R.id.text1);
         TextView line2 = (TextView) v.findViewById(R.id.text2);
+        TextView timeTV = (TextView) v.findViewById(R.id.text_time);
         Song s = getItem(position);
-        int duration = (s.getTrackLengthMillis() + 500) / 1000;
-        String durationStr = (duration / 60) + ":" + (duration % 60);
-        String l1 = s.title + " (" + durationStr + ")";
-        line1.setText(l1);
+        line1.setText(s.title);
         line2.setText(s.album);
+        timeTV.setText(MinSec.toString(s.getTrackLengthMillis()));
         return v;
     }
 }
