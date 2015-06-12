@@ -16,7 +16,9 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 
 import java.util.ArrayList;
@@ -26,7 +28,7 @@ import java.util.List;
  * Created by topher on 6/10/15.
  */
 public class AddSongFragment extends DialogFragment implements View.OnClickListener,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener, AdapterView.OnItemClickListener {
     private static final String TAG = AddSongFragment.class.getSimpleName();
 
     private static String lastAlbumSelected;
@@ -41,6 +43,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
     ArrayAdapter<String> albumListArrayAdapter;
     SongListArrayAdapter songListArrayAdapter;
     Handler handler;
+    SongPlayer songPlayer;
 
     public static AddSongFragment newInstance(PreludeChoice preludeChoice) {
         AddSongFragment f = new AddSongFragment();
@@ -60,7 +63,6 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
     //
     //}
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -71,6 +73,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
         okay = (Button) rootView.findViewById(R.id.okay_btn);
         albumSpinner = (Spinner) rootView.findViewById(R.id.album_spn);
         songSelLV = (ListView) rootView.findViewById(R.id.song_choice);
+        songSelLV.setOnItemClickListener(this);
 
         songList = new ArrayList<Song>();
 
@@ -97,6 +100,10 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
             thisDialog.setTitle("Add Songs");
         }
 
+        ImageButton playPause = (ImageButton) rootView.findViewById(R.id.play_pause);
+        SeekBar sb = (SeekBar) rootView.findViewById(R.id.seek_bar);
+        songPlayer = new SongPlayer(getActivity(), playPause, sb);
+
         return rootView;
     }
 
@@ -115,6 +122,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
 
             thisDialog.getWindow().setLayout(dialogWidth, dialogHeight);
         }
+        songPlayer.fragmentStarting();
     }
 
     @Override
@@ -151,6 +159,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
     @Override
     public void onDetach() {
         super.onDetach();
+        songPlayer.fragmentFinishing();
     }
 
     void updateSongList(int position) {
@@ -185,5 +194,12 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
     void doCancel() {
         lastAlbumSelected = (String) albumSpinner.getSelectedItem();
         dismiss();
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        if (songSelLV.getCheckedItemPositions().get(position)) {
+            songPlayer.setSong((Song) songSelLV.getItemAtPosition(position));
+        }
     }
 }
