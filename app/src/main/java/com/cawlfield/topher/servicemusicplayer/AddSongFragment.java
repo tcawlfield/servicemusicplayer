@@ -13,6 +13,7 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -20,6 +21,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +41,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
     Spinner albumSpinner;
     ListView songSelLV;
     PreludeChoice preludeChoice;
+    TextView previewSongTitle;
 
     ArrayAdapter<String> albumListArrayAdapter;
     SongListArrayAdapter songListArrayAdapter;
@@ -72,8 +75,10 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
         cancel = (Button) rootView.findViewById(R.id.cancel_btn);
         okay = (Button) rootView.findViewById(R.id.okay_btn);
         albumSpinner = (Spinner) rootView.findViewById(R.id.album_spn);
+        previewSongTitle = (TextView) rootView.findViewById(R.id.preview_song_title);
         songSelLV = (ListView) rootView.findViewById(R.id.song_choice);
         songSelLV.setOnItemClickListener(this);
+        //songSelLV.setMultiChoiceModeListener(this);
 
         songList = new ArrayList<Song>();
 
@@ -123,6 +128,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
             thisDialog.getWindow().setLayout(dialogWidth, dialogHeight);
         }
         songPlayer.fragmentStarting();
+        previewSongTitle.setText("");
     }
 
     @Override
@@ -148,6 +154,7 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        // An album was selected from the spinner
         updateSongList(position);
     }
 
@@ -198,8 +205,17 @@ public class AddSongFragment extends DialogFragment implements View.OnClickListe
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        // An item in the song selection list was clicked.
         if (songSelLV.getCheckedItemPositions().get(position)) {
-            songPlayer.setSong((Song) songSelLV.getItemAtPosition(position));
+            // This item is "checked".
+            Song selectedSong = (Song) songSelLV.getItemAtPosition(position);
+            if (selectedSong != null) { // Can't think of how this would not be true
+                songPlayer.setSong(selectedSong);
+                previewSongTitle.setText(selectedSong.title);
+            }
+        } else {
+            previewSongTitle.setText("");
+            songPlayer.setSong(null);
         }
     }
 }

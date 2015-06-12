@@ -37,12 +37,14 @@
         android:layout_weight="1"
         android:clickable="true"
         android:choiceMode="multipleChoice"
+        android:listSelector="@android:drawable/list_selector_background"
         android:minHeight="300dp" />
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/dark_bkg">
 
         <ImageButton
             android:layout_width="wrap_content"
@@ -59,6 +61,27 @@
             android:layout_weight="1"
             android:layout_gravity="center_vertical" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_bkg">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/preview"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text=""
+            android:id="@+id/preview_song_title" />
     </LinearLayout>
 
     <LinearLayout
