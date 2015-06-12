@@ -61,7 +61,7 @@ public class HymnChoice extends Fragment implements AdapterView.OnItemClickListe
     ListView hymnListView;
     Button doneButton;
     List<MusicCatalog.Hymn> hymnList;
-    List<String> hymnListStr;
+    //List<String> hymnListStr;
     ArrayAdapter hymnListViewAdapter;
     Runnable updateListRunnable;
     Handler handler;
@@ -100,8 +100,8 @@ public class HymnChoice extends Fragment implements AdapterView.OnItemClickListe
         hymnListView = (ListView) rootView.findViewById(R.id.hymnList);
         doneButton = (Button) rootView.findViewById(R.id.okay_button);
 
-        hymnListStr = new ArrayList<String>(); // initially empty
-        hymnListViewAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_activated_1, hymnListStr);
+        hymnList = new ArrayList<MusicCatalog.Hymn>(); // initially empty
+        hymnListViewAdapter = new ArrayAdapter<MusicCatalog.Hymn>(getActivity(), android.R.layout.simple_list_item_activated_1, hymnList);
         hymnListView.setAdapter(hymnListViewAdapter);
         hymnListView.setClickable(true);
         hymnListView.setOnItemClickListener(this);
@@ -200,19 +200,15 @@ public class HymnChoice extends Fragment implements AdapterView.OnItemClickListe
             Log.d(TAG, "hymnNumStr = " + hymnNumStr);
             try {
                 int hymnNum = Integer.parseInt(hymnNumStr);
-                hymnList = MusicCatalog.getInstance().getHymns(hymnNum);
-                if (hymnList.isEmpty()) {
-                    // empty out hymn list
-                    hymnListStr.clear();
-                    hymnListViewAdapter.notifyDataSetChanged();
-                } else {
-                    hymnListStr.clear();
-                    for (MusicCatalog.Hymn h : hymnList) {
-                        Log.d(TAG, "Found hymn " + h.title);
-                        hymnListStr.add(h.title);
-                    }
-                    hymnListViewAdapter.notifyDataSetChanged();
+                List<MusicCatalog.Hymn> newList = MusicCatalog.getInstance().getHymns(hymnNum);
+                hymnList.clear();
+                if (newList != null && ! newList.isEmpty()) {
+                    hymnList.addAll(newList);
+                }
+                hymnListViewAdapter.notifyDataSetChanged();
+                if (! hymnList.isEmpty()) {
                     hymnListView.setItemChecked(0, true);
+                    songPlayer.setSong(hymnList.get(0));
                 }
             } catch (NumberFormatException e) {}
         }

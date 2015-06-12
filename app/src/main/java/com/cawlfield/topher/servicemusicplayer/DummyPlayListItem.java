@@ -48,12 +48,8 @@ public class DummyPlayListItem extends PlayListItemBase {
     }
 
     @Override
-    public boolean play(Context ct) {
-        return false;
-    }
-
-    @Override
-    public void stop() {
+    protected Song getSong() {
+        return null;
     }
 
     @Override

@@ -21,6 +21,9 @@ package com.cawlfield.topher.servicemusicplayer;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.text.Layout;
 import android.util.Log;
 import android.view.View;
@@ -30,6 +33,8 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import java.io.IOException;
 
 /**
  * Created by ccawlfield on 8/25/14.
@@ -46,6 +51,8 @@ public abstract class PlayListItemBase {
     boolean isUpNext = false;
     UpNextSelectedCallback upNextCallback;
     MainActyCallbacks mainCallback;
+    MediaPlayer mediaPlayer;
+    private Context lastPlayContext;
 
     public PlayListItemBase(MainActyCallbacks callback) {
         mainCallback = callback;
@@ -130,7 +137,91 @@ public abstract class PlayListItemBase {
 
     public abstract Fragment getSongChoiceFragment(int idx);
 
-    public abstract boolean play(Context ct);
+    // Implement this to return the Song to play.
+    protected abstract Song getSong();
 
-    public abstract void stop();
+    public boolean play(Context ct) {
+        lastPlayContext = ct;
+        Song song = getSong();
+        if (null == song) {
+            return false;
+        }
+
+        if (null == mediaPlayer) {
+            mediaPlayer = new MediaPlayer();
+        } else if (mediaPlayer.isPlaying()) {
+            Log.e(TAG, "in play() method but MediaPlayer is already playing something.");
+            return false;
+        } else {
+            mediaPlayer.reset();
+        }
+
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        Uri contentUri = song.getUri();
+
+        try {
+            mediaPlayer.setDataSource(ct, contentUri);
+        } catch (IOException e) {
+            Log.d(TAG, "Error finding data source: ", e);
+            return false;
+        }
+        //mediaPlayer.setWakeMode(ct, PowerManager.SCREEN_BRIGHT_WAKE_LOCK);
+        mediaPlayer.setOnPreparedListener(new MyOnPrepared());
+        mediaPlayer.setOnCompletionListener(new MyOnPlaybackFinished());
+        mediaPlayer.prepareAsync();
+        return true;
+    }
+
+    // override this if this playlistitem has multiple songs.
+    protected boolean moreToPlay() {
+        return false;
+    }
+
+    protected int getProgress() {
+        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+            return mediaPlayer.getCurrentPosition();
+        } else {
+            return 0;
+        }
+    }
+
+    class MyOnPrepared implements MediaPlayer.OnPreparedListener {
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+            upNextCallback.setProgressMax(mp.getDuration());
+            mp.start();
+        }
+    }
+
+    class MyOnPlaybackFinished implements MediaPlayer.OnCompletionListener {
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            if (moreToPlay()) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {}
+                play(lastPlayContext);
+            } else {
+                mp.reset();
+                mp.release();
+                if (null != mediaPlayer) { // possible race condition
+                    mediaPlayer = null;
+                }
+                upNextCallback.songFinished();
+            }
+        }
+    }
+
+    public void stop() {
+        if (null == mediaPlayer) {
+            return;
+        }
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+        }
+        mediaPlayer.reset();
+        mediaPlayer.release();
+        mediaPlayer = null;
+    }
+
 }

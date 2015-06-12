@@ -74,8 +74,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
     MainActyCallbacks mainActyCallbacks;
     SongPlayer songPlayer;
 
-    int endHour = 19;
-    int endMinute = 30;
+    int endHour;
+    int endMinute;
     int targetDurSeconds = 10 * 60;
 
     List<String> songListStr;
@@ -151,6 +151,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
         if (songList == null) {
             songList = new ArrayList<Song>();
         }
+        endHour = preludePLItem.endHour;
+        endMinute = preludePLItem.endMinute;
     }
 
     @Override
@@ -193,6 +195,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
 
     void done() {
         preludePLItem.setSongList(songList);
+        preludePLItem.endHour = endHour;
+        preludePLItem.endMinute = endMinute;
         mainActyCallbacks.onSongChoiceDone();
     }
 

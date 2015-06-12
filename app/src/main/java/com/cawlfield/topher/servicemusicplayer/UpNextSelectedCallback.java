@@ -23,4 +23,10 @@ public interface UpNextSelectedCallback {
     public void selectedSong(PlayListItemBase item);
 
     public void songFinished();
+
+    // Refresh the playlist items (maybe a subtitle changed?)
+    public void refreshPLI();
+
+    // Set the max scale on the playback progress bar
+    public void setProgressMax(int max);
 }

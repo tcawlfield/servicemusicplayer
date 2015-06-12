@@ -26,6 +26,7 @@ package com.cawlfield.topher.servicemusicplayer;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,6 +37,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ public class OverviewFrag extends Fragment {
     MyUpNextSelected myUpNextSelected = new MyUpNextSelected();
     MainActyCallbacks mainCallback;
     boolean musicPlaying = false;
+    ProgressBar playbackProgress;
+    ProgressBarUpdater progressBarUpdater;
 
     public OverviewFrag() {
     }
@@ -80,6 +84,7 @@ public class OverviewFrag extends Fragment {
 
         lv = (ListView) rootView.findViewById(R.id.trackList);
         playStop = (Button) rootView.findViewById(R.id.go_button);
+        playbackProgress = (ProgressBar) rootView.findViewById(R.id.progress_bar);
 
         myseq = new MySeqAdapter(getActivity(), playList);
         lv.setAdapter(myseq);
@@ -170,6 +175,21 @@ public class OverviewFrag extends Fragment {
             musicPlaying = false;
             setPlayStopText();
             incrementUpNext();
+            if (progressBarUpdater != null) {
+                progressBarUpdater.cancel(true);
+                progressBarUpdater = null;
+                playbackProgress.setProgress(0);
+            }
+        }
+
+        @Override
+        public void refreshPLI() {
+            lv.invalidateViews();
+        }
+
+        @Override
+        public void setProgressMax(int max) {
+            playbackProgress.setMax(max);
         }
     }
 
@@ -183,12 +203,23 @@ public class OverviewFrag extends Fragment {
                 musicPlaying = false;
                 setPlayStopText();
                 incrementUpNext();
+                if (progressBarUpdater != null) {
+                    progressBarUpdater.cancel(true);
+                    progressBarUpdater = null;
+                    playbackProgress.setProgress(0);
+                }
             } else {
                 if (null != plUpNext) {
                     boolean success = plUpNext.play(getActivity());
                     if (success) {
                         musicPlaying = true;
                         setPlayStopText();
+                        if (progressBarUpdater != null) {
+                            progressBarUpdater.cancel(true);
+                            playbackProgress.setProgress(0);
+                        }
+                        progressBarUpdater = new ProgressBarUpdater();
+                        progressBarUpdater.execute(plUpNext);
                     }
                 }
             }
@@ -214,6 +245,24 @@ public class OverviewFrag extends Fragment {
             playStop.setText(R.string.stop);
         } else {
             playStop.setText(R.string.play);
+        }
+    }
+
+    class ProgressBarUpdater extends AsyncTask<PlayListItemBase, Integer, Void> {
+        @Override
+        protected Void doInBackground(PlayListItemBase... pli) {
+            do {
+                publishProgress(pli[0].getProgress());
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {}
+            } while (! isCancelled());
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            playbackProgress.setProgress(progress[0]);
         }
     }
 }

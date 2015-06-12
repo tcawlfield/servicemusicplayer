@@ -5,9 +5,12 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -34,8 +37,11 @@ public class PreludePLItem extends PlayListItemBase {
     private static String TAG = PreludePLItem.class.getSimpleName();
     List<Song> songList;
     private int durationTotal = 0;
-    private Calendar timeToFinish;
-    MediaPlayer mediaPlayer;
+    private int nextSongIdx = 0;
+    int endHour = 19;
+    int endMinute = 30;
+    Calendar waitingStarted;
+    Handler handler;
 
     public PreludePLItem(MainActyCallbacks callback) {
         super(callback);
@@ -46,6 +52,8 @@ public class PreludePLItem extends PlayListItemBase {
     public void initNoSong() {
         setTitle("No Preludes Selected");
         setInfo("Tap to select preludes");
+        songList = new ArrayList<Song>();
+        nextSongIdx = 0;
     }
 
     @Override
@@ -70,62 +78,83 @@ public class PreludePLItem extends PlayListItemBase {
         }
         // TODO: info could show song length
         //mainCallback.onSongChoiceDone();
+        nextSongIdx = 0;
     }
 
+    @Override
+    protected Song getSong() {
+        if (nextSongIdx < songList.size()) {
+            Song s = songList.get(nextSongIdx);
+            nextSongIdx++;
+            setInfo("Playing: " + s.title);
+            upNextCallback.refreshPLI();
+            return s;
+        } else {
+            setInfo("total time " + MinSec.toString(durationTotal));
+            return null;
+        }
+    }
+
+    @Override
     public boolean play(Context ct) {
-        if (null == songList || songList.size() < 1) {
-            return false;
-        }
-        Song song = songList.get(0);
-        if (null == mediaPlayer) {
-            mediaPlayer = new MediaPlayer();
-        }
-        if (mediaPlayer.isPlaying()) {
-            Log.e(TAG, "in play() method but MediaPlayer is already playing something.");
-            return false;
-        }
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        Uri contentUri = song.getUri();
-
-        try {
-            mediaPlayer.setDataSource(ct, contentUri);
-        } catch (IOException e) {
-            Log.d(TAG, "Error finding data source: ", e);
-            return false;
-        }
-        //mediaPlayer.setWakeMode(ct, PowerManager.SCREEN_BRIGHT_WAKE_LOCK);
-        mediaPlayer.setOnPreparedListener(new MyOnPrepared());
-        mediaPlayer.setOnCompletionListener(new MyOnPlaybackFinished());
-        mediaPlayer.prepareAsync();
-        return true;
-    }
-
-    class MyOnPrepared implements MediaPlayer.OnPreparedListener {
-        @Override
-        public void onPrepared(MediaPlayer mp) {
-            mp.start();
-        }
-    }
-
-    class MyOnPlaybackFinished implements MediaPlayer.OnCompletionListener {
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            mp.release();
-            if (null != mediaPlayer) { // possible race condition
-                mediaPlayer = null;
+        if (nextSongIdx == 0) {
+            // We might wait to start.
+            Calendar now = Calendar.getInstance();
+            Calendar finishAt = Calendar.getInstance();
+            finishAt.set(Calendar.HOUR_OF_DAY, endHour);
+            finishAt.set(Calendar.MINUTE, endMinute);
+            int waitMillis = finishAt.compareTo(now) - durationTotal;
+            if (waitMillis <= 0) {
+                return super.play(ct);
+            } else {
+                waitingStarted = now;
+                if (handler == null) {
+                    handler = new Handler(Looper.getMainLooper());
+                }
+                waitIsOver = new WaitIsOver();
+                waitIsOver.playContext = ct;
+                handler.postDelayed(new WaitIsOver(), waitMillis);
+                upNextCallback.setProgressMax(waitMillis);
+                setInfo("Waiting to start (" + MinSec.toString(waitMillis) + ")");
+                upNextCallback.refreshPLI();
+                return true;
             }
-            upNextCallback.songFinished();
+        } else {
+            return super.play(ct);
         }
     }
 
+    class WaitIsOver implements Runnable {
+        Context playContext;
+        @Override
+        public void run() {
+            // This happens when it's time to play the first song.
+            playNow(playContext);
+        }
+    }
+    WaitIsOver waitIsOver;
+
+    void playNow(Context ct) {
+        waitingStarted = null;
+        super.play(ct);
+    }
+
+    @Override
+    public int getProgress() {
+        if (waitingStarted != null) {
+            Calendar now = Calendar.getInstance();
+            return now.compareTo(waitingStarted);
+        } else {
+            return super.getProgress();
+        }
+    }
+
+    @Override
     public void stop() {
-        if (null == mediaPlayer) {
-            return;
+        if (waitingStarted != null && handler != null) {
+            handler.removeCallbacks(waitIsOver);
+        } else {
+            super.stop();
         }
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-        }
-        mediaPlayer.release();
-        mediaPlayer = null;
     }
 }

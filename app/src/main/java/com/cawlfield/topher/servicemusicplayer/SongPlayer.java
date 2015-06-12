@@ -180,7 +180,7 @@ public class SongPlayer implements View.OnClickListener, SeekBar.OnSeekBarChange
 
         @Override
         protected void onProgressUpdate(Void... ignored) {
-            if(mp != null){
+            if (mp != null) {
             int mCurrentPosition = mp.getCurrentPosition();
                 seekBar.setProgress(mCurrentPosition);
             }

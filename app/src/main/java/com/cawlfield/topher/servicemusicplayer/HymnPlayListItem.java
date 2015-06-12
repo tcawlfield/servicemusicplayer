@@ -63,59 +63,8 @@ public class HymnPlayListItem extends PlayListItemBase {
         //mainCallback.onSongChoiceDone();
     }
 
-    public boolean play(Context ct) {
-        if (null == hymn) {
-            return false;
-        }
-        if (null == mediaPlayer) {
-            mediaPlayer = new MediaPlayer();
-        }
-        if (mediaPlayer.isPlaying()) {
-            Log.e(TAG, "in play() method but MediaPlayer is already playing something.");
-            return false;
-        }
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        Uri contentUri = hymn.getUri();
-
-        try {
-            mediaPlayer.setDataSource(ct, contentUri);
-        } catch (IOException e) {
-            Log.d(TAG, "Error finding data source: ", e);
-            return false;
-        }
-        //mediaPlayer.setWakeMode(ct, PowerManager.SCREEN_BRIGHT_WAKE_LOCK);
-        mediaPlayer.setOnPreparedListener(new MyOnPrepared());
-        mediaPlayer.setOnCompletionListener(new MyOnPlaybackFinished());
-        mediaPlayer.prepareAsync();
-        return true;
-    }
-
-    class MyOnPrepared implements MediaPlayer.OnPreparedListener {
-        @Override
-        public void onPrepared(MediaPlayer mp) {
-            mp.start();
-        }
-    }
-
-    class MyOnPlaybackFinished implements MediaPlayer.OnCompletionListener {
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            mp.release();
-            if (null != mediaPlayer) { // possible race condition
-                mediaPlayer = null;
-            }
-            upNextCallback.songFinished();
-        }
-    }
-
-    public void stop() {
-        if (null == mediaPlayer) {
-            return;
-        }
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-        }
-        mediaPlayer.release();
-        mediaPlayer = null;
+    @Override
+    protected Song getSong() {
+        return hymn;
     }
 }

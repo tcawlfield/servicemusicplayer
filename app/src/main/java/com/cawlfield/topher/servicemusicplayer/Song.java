@@ -55,4 +55,8 @@ class Song {
         mediaPlayer = null;
         return duration;
     }
+
+    public String toString() { // for ArrayAdapter
+        return title;
+    }
 }
