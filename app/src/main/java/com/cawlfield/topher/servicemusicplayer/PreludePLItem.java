@@ -32,7 +32,7 @@ import java.util.List;
 
 public class PreludePLItem extends PlayListItemBase {
     private static String TAG = PreludePLItem.class.getSimpleName();
-    private List<Song> songList;
+    List<Song> songList;
     private int durationTotal = 0;
     private Calendar timeToFinish;
     MediaPlayer mediaPlayer;
@@ -66,8 +66,7 @@ public class PreludePLItem extends PlayListItemBase {
             for (Song s : songList) {
                 durationTotal += s.getTrackLengthMillis();
             }
-            int secs = (durationTotal + 500) / 1000;
-            setInfo("total time " + (secs/60) + ":" + (secs % 60));
+            setInfo("total time " + MinSec.toString(durationTotal));
         }
         // TODO: info could show song length
         //mainCallback.onSongChoiceDone();

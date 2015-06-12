@@ -31,29 +31,43 @@
         <requestFocus />
     </EditText>
 
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/preview_hymn"
-        android:id="@+id/preview_checkbox"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/okay"
-        android:id="@+id/okay_button"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true" />
-
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/hymnList"
         android:layout_below="@+id/hymnNumber"
-        android:layout_above="@id/okay_button"
+        android:layout_above="@+id/preview_and_okay"
         android:choiceMode="singleChoice"
         android:layout_alignParentStart="true" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/preview_and_okay"
+        android:layout_alignParentBottom="true">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/play_pause"
+            android:background="@android:drawable/ic_media_play"
+            android:layout_margin="4dp"
+            android:layout_gravity="center_vertical" />
+
+        <SeekBar
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/seek_bar"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/okay"
+            android:id="@+id/okay_button"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
 
 </RelativeLayout>

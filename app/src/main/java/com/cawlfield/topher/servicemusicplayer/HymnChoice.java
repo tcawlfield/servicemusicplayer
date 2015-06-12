@@ -15,11 +15,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -49,14 +52,13 @@ import java.util.List;
  * A simple {@link Fragment} subclass.
  *
  */
-public class HymnChoice extends Fragment {
+public class HymnChoice extends Fragment implements AdapterView.OnItemClickListener {
 
     private static int MAX_HYMN_DIGITS = 3;
     private static String TAG = "HymnChoice";
 
     EditText hymnEntry;
     ListView hymnListView;
-    CheckBox previewCB;
     Button doneButton;
     List<MusicCatalog.Hymn> hymnList;
     List<String> hymnListStr;
@@ -65,6 +67,7 @@ public class HymnChoice extends Fragment {
     Handler handler;
     HymnPlayListItem hymnPlayListItem;
     MainActyCallbacks mainActyCallbacks;
+    SongPlayer songPlayer;
 
     public HymnChoice() {
         super();
@@ -95,15 +98,19 @@ public class HymnChoice extends Fragment {
 
         hymnEntry = (EditText) rootView.findViewById(R.id.hymnNumber);
         hymnListView = (ListView) rootView.findViewById(R.id.hymnList);
-        previewCB = (CheckBox) rootView.findViewById(R.id.preview_checkbox);
         doneButton = (Button) rootView.findViewById(R.id.okay_button);
 
         hymnListStr = new ArrayList<String>(); // initially empty
         hymnListViewAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_activated_1, hymnListStr);
         hymnListView.setAdapter(hymnListViewAdapter);
         hymnListView.setClickable(true);
+        hymnListView.setOnItemClickListener(this);
 
         updateListRunnable = new UpdateHymnListRunnable();
+
+        ImageButton playPause = (ImageButton) rootView.findViewById(R.id.play_pause);
+        SeekBar sb = (SeekBar) rootView.findViewById(R.id.seek_bar);
+        songPlayer = new SongPlayer(getActivity(), playPause, sb);
 
         hymnEntry.addTextChangedListener(new TextWatcher() {
             @Override
@@ -174,6 +181,15 @@ public class HymnChoice extends Fragment {
         InputMethodManager imm = (InputMethodManager) getActivity()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(hymnEntry, InputMethodManager.SHOW_IMPLICIT);
+        songPlayer.fragmentStarting();
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        // An item in the hymn list was clicked.
+        //Song selectedSong = (Song) hymnListViewAdapter.getItem(position);
+        Song selectedSong = (Song) hymnList.get(position);
+        songPlayer.setSong(selectedSong);
     }
 
     class UpdateHymnListRunnable implements Runnable {
@@ -204,6 +220,7 @@ public class HymnChoice extends Fragment {
 
     @Override
     public void onDetach() {
+        songPlayer.fragmentFinishing();
         super.onDetach();
         //mListener = null;
     }

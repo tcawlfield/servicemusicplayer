@@ -32,13 +32,13 @@
 
     <ListView
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="200dp"
         android:id="@+id/song_choice"
         android:layout_weight="1"
         android:clickable="true"
         android:choiceMode="multipleChoice"
         android:listSelector="@android:drawable/list_selector_background"
-        android:minHeight="300dp" />
+        android:minHeight="200dp" />
 
     <LinearLayout
         android:orientation="horizontal"

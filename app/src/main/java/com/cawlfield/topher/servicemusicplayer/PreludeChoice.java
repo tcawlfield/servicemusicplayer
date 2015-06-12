@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
@@ -49,7 +50,7 @@ import java.util.List;
  * A simple {@link Fragment} subclass.
  *
  */
-public class PreludeChoice extends Fragment implements View.OnClickListener {
+public class PreludeChoice extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     private static int MAX_HYMN_DIGITS = 3;
     private static String TAG = PreludeChoice.class.getSimpleName();
@@ -71,6 +72,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
     Handler handler;
     PreludePLItem preludePLItem;
     MainActyCallbacks mainActyCallbacks;
+    SongPlayer songPlayer;
 
     int endHour = 19;
     int endMinute = 30;
@@ -116,11 +118,10 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         mvDownBtn = (ImageButton) rootView.findViewById(R.id.move_down);
         totalTime = (TextView) rootView.findViewById(R.id.total_time);
 
-        songList = new ArrayList<Song>();
-
         songListViewAdapter = new SongListArrayAdapter(getActivity(), songList);
         preludeLV.setAdapter(songListViewAdapter);
         preludeLV.setClickable(true);
+        preludeLV.setOnItemClickListener(this);
 
         endTimeTV.setOnClickListener(this);
         okayBtn.setOnClickListener(this);
@@ -130,6 +131,10 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         delBtn.setOnClickListener(this);
         mvUpBtn.setOnClickListener(this);
         mvDownBtn.setOnClickListener(this);
+
+        ImageButton playPause = (ImageButton) rootView.findViewById(R.id.play_pause);
+        SeekBar sb = (SeekBar) rootView.findViewById(R.id.seek_bar);
+        songPlayer = new SongPlayer(getActivity(), playPause, sb);
 
         return rootView;
     }
@@ -142,6 +147,10 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
 
         List<PlayListItemBase> pl = mainActyCallbacks.getPlayList();
         preludePLItem = (PreludePLItem) pl.get(getArguments().getInt("index", 0));
+        songList = preludePLItem.songList;
+        if (songList == null) {
+            songList = new ArrayList<Song>();
+        }
     }
 
     @Override
@@ -154,6 +163,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         updateStartTime();
         updateUpToTime();
         updateTotalTime();
+        songPlayer.fragmentStarting();
     }
 
     @Override
@@ -177,6 +187,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
 
     @Override
     public void onDetach() {
+        songPlayer.fragmentFinishing();
         super.onDetach();
     }
 
@@ -231,6 +242,13 @@ public class PreludeChoice extends Fragment implements View.OnClickListener {
         EndTimePickerFragment newFragment = new EndTimePickerFragment();
         newFragment.setPlC(this);
         newFragment.show(getFragmentManager(), "timePicker");
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        // An item in the prelude list was clicked.
+        Song selectedSong = songListViewAdapter.getItem(position);
+        songPlayer.setSong(selectedSong);
     }
 
     public static class EndTimePickerFragment extends DialogFragment
