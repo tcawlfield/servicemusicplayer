@@ -83,6 +83,7 @@ public class PreludePLItem extends PlayListItemBase {
 
     @Override
     protected Song getSong() {
+        Log.d(TAG, "nextSongIdx = " + nextSongIdx);
         if (nextSongIdx < songList.size()) {
             Song s = songList.get(nextSongIdx);
             nextSongIdx++;
@@ -90,20 +91,37 @@ public class PreludePLItem extends PlayListItemBase {
             upNextCallback.refreshPLI();
             return s;
         } else {
+            // This should never happen because we rely on moreToPlay() instead.
             setInfo("total time " + MinSec.toString(durationTotal));
+            upNextCallback.refreshPLI();
             return null;
+        }
+    }
+
+    @Override
+    protected boolean moreToPlay() {
+        if (nextSongIdx < songList.size()) {
+            return true;
+        } else {
+            setInfo("total time " + MinSec.toString(durationTotal));
+            upNextCallback.refreshPLI();
+            return false;
         }
     }
 
     @Override
     public boolean play(Context ct) {
         if (nextSongIdx == 0) {
+            Log.d(TAG, "First song, might wait to start...");
             // We might wait to start.
             Calendar now = Calendar.getInstance();
             Calendar finishAt = Calendar.getInstance();
             finishAt.set(Calendar.HOUR_OF_DAY, endHour);
             finishAt.set(Calendar.MINUTE, endMinute);
-            int waitMillis = finishAt.compareTo(now) - durationTotal;
+            finishAt.set(Calendar.SECOND, 0);
+            //Log.d(TAG, "finishAt.compareTo(now) = " + finishAt.compareTo(now));
+            int waitMillis = (int)(finishAt.getTimeInMillis() - now.getTimeInMillis()) - durationTotal;
+            Log.d(TAG, "waitMillis = " + waitMillis);
             if (waitMillis <= 0) {
                 return super.play(ct);
             } else {
@@ -111,21 +129,24 @@ public class PreludePLItem extends PlayListItemBase {
                 if (handler == null) {
                     handler = new Handler(Looper.getMainLooper());
                 }
-                waitIsOver = new WaitIsOver();
-                waitIsOver.playContext = ct;
-                handler.postDelayed(new WaitIsOver(), waitMillis);
+                waitIsOver = new WaitIsOver(ct);
+                handler.postDelayed(waitIsOver, waitMillis);
                 upNextCallback.setProgressMax(waitMillis);
                 setInfo("Waiting to start (" + MinSec.toString(waitMillis) + ")");
                 upNextCallback.refreshPLI();
                 return true;
             }
         } else {
+            Log.d(TAG, "super.play()");
             return super.play(ct);
         }
     }
 
     class WaitIsOver implements Runnable {
-        Context playContext;
+        public WaitIsOver(Context ct) {
+            playContext = ct;
+        }
+        private Context playContext;
         @Override
         public void run() {
             // This happens when it's time to play the first song.
@@ -143,7 +164,7 @@ public class PreludePLItem extends PlayListItemBase {
     public int getProgress() {
         if (waitingStarted != null) {
             Calendar now = Calendar.getInstance();
-            return now.compareTo(waitingStarted);
+            return (int) (now.getTimeInMillis() - waitingStarted.getTimeInMillis());
         } else {
             return super.getProgress();
         }
