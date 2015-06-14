@@ -26,6 +26,7 @@ package com.cawlfield.topher.servicemusicplayer;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -36,6 +37,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -60,6 +62,7 @@ public class OverviewFrag extends Fragment {
     boolean musicPlaying = false;
     ProgressBar playbackProgress;
     ProgressBarUpdater progressBarUpdater;
+    AudioManager audioManager;
 
     public OverviewFrag() {
     }
@@ -96,26 +99,41 @@ public class OverviewFrag extends Fragment {
         //lv.canAnimate(true);
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-              @Override
-              public void onItemClick(AdapterView<?> parent, View view,
-                 int position, long id) {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
 
-               // ListView Clicked item index
-               int itemPosition     = position;
+                // ListView Clicked item index
+                int itemPosition = position;
 
-               // ListView Clicked item value
-               String  itemValue    = (String) lv.getItemAtPosition(position);
+                // ListView Clicked item value
+                String itemValue = (String) lv.getItemAtPosition(position);
 
-               // Show Alert
-               Toast.makeText(getActivity().getApplicationContext(),
-                       "Position :" + itemPosition + "  ListItem : " + itemValue, Toast.LENGTH_LONG)
-                 .show();
+                // Show Alert
+                Toast.makeText(getActivity().getApplicationContext(),
+                        "Position :" + itemPosition + "  ListItem : " + itemValue, Toast.LENGTH_LONG)
+                        .show();
 
-                  Log.d(TAG, "item click: Position :" + itemPosition);
-              }
-         });
+                Log.d(TAG, "item click: Position :" + itemPosition);
+            }
+        });
 
         playStop.setOnClickListener(new PlayStopListener());
+
+        ImageButton vu = (ImageButton) rootView.findViewById(R.id.volume_up);
+        ImageButton vd = (ImageButton) rootView.findViewById(R.id.volume_down);
+        vu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+            }
+        });
+        vd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0);
+            }
+        });
 
         return rootView;
     }
@@ -126,17 +144,9 @@ public class OverviewFrag extends Fragment {
 
         mainCallback = (MainActyCallbacks) activity;
         playList = mainCallback.getPlayList();
-    }
 
-//    @Override
-//    public void onResume() {
-//        super.onResume();
-//        InputMethodManager inputManager = (InputMethodManager)
-//            getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-//
-//        inputManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
-//            InputMethodManager.HIDE_NOT_ALWAYS);
-//    }
+        audioManager = (AudioManager)activity.getSystemService(Context.AUDIO_SERVICE);
+    }
 
     class MySeqAdapter extends ArrayAdapter<PlayListItemBase> {
         Context parentContext;
@@ -255,7 +265,7 @@ public class OverviewFrag extends Fragment {
             do {
                 publishProgress(pli[0].getProgress());
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {}
             } while (! isCancelled());
             return null;

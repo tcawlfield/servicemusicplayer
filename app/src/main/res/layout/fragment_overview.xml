@@ -16,7 +16,8 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:textSize="@dimen/play_btn_text_size"
-        android:layout_toLeftOf="@+id/volume_up" />
+        android:layout_toStartOf="@+id/volume_up"
+        android:layout_marginEnd="20dp" />
 
     <ListView
         android:layout_width="fill_parent"
@@ -35,13 +36,12 @@
         android:layout_above="@+id/go_button" />
 
     <ImageButton
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/volume_up"
         android:layout_below="@+id/progress_bar"
-        android:background="@android:drawable/arrow_up_float"
-        android:layout_alignParentEnd="true"
-        android:layout_marginLeft="6dp" />
+        android:background="@drawable/volume_up"
+        android:layout_alignParentEnd="true" />
 
     <ImageButton
         android:layout_width="50dp"
@@ -49,6 +49,6 @@
         android:id="@+id/volume_down"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:background="@android:drawable/arrow_down_float" />
+        android:background="@drawable/volume_down" />
 
 </RelativeLayout>

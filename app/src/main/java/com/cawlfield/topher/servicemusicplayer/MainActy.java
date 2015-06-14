@@ -23,7 +23,9 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,6 +43,7 @@ public class MainActy extends Activity
     private static final String TAG = MainActy.class.getSimpleName();
     private List<PlayListItemBase> playList;
     private static Context context;
+    PowerManager.WakeLock wl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,22 +52,16 @@ public class MainActy extends Activity
 
         MainActy.context = getApplicationContext();
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        // TODO: Add screen dimming. See http://stackoverflow.com/questions/4803248/dim-screen-while-user-inactive
+        // This should skip the lock screen if/when the phone locks out with the
+        //  app running.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        // See http://stackoverflow.com/questions/4803248/dim-screen-while-user-inactive
 
         playList = new ArrayList<PlayListItemBase>(10);
         playList.add(new PreludePLItem(this));
         playList.add(new HymnPlayListItem(this));
         playList.add(new HymnPlayListItem(this));
         playList.add(new HymnPlayListItem(this));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-        //playList.add(new DummyPlayListItem(myUpNextSelected, songChoiceCallback));
-
 
         setContentView(R.layout.activity_overview_acty);
         if (savedInstanceState == null) {
@@ -74,8 +71,27 @@ public class MainActy extends Activity
         }
         MusicCatalog cat = MusicCatalog.getInstance();
         cat.setContext(this);
+
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (wl == null) {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "ServiceMusicPlayer");
+        }
+        wl.acquire();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (wl != null) {
+            wl.release();
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
