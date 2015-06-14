@@ -55,7 +55,7 @@ public class OverviewFrag extends Fragment {
     Button playStop;
 
     List<PlayListItemBase> playList;
-    PlayListItemBase plUpNext = null;
+    static PlayListItemBase plUpNext = null;
     MySeqAdapter myseq;
     MyUpNextSelected myUpNextSelected = new MyUpNextSelected();
     MainActyCallbacks mainCallback;
@@ -83,7 +83,10 @@ public class OverviewFrag extends Fragment {
             pli.setFragInfo(myUpNextSelected);
         }
 
-        myUpNextSelected.selectedSong(playList.get(0)); // select the first item
+        if (plUpNext == null) {
+            plUpNext = playList.get(0);
+        }
+        myUpNextSelected.selectedSong(plUpNext); // select the first item
 
         lv = (ListView) rootView.findViewById(R.id.trackList);
         playStop = (Button) rootView.findViewById(R.id.go_button);
@@ -135,7 +138,30 @@ public class OverviewFrag extends Fragment {
             }
         });
 
+        musicPlaying = plUpNext.isPlaying();
+        setPlayStopText();
+        if (progressBarUpdater != null) {
+            // should never happen because of onStop()
+            progressBarUpdater.cancel(true);
+        }
+        if (musicPlaying) {
+            int max = plUpNext.getDuration();
+            Log.d(TAG, "Max progress: " + max);
+            playbackProgress.setMax(max);
+            progressBarUpdater = new ProgressBarUpdater();
+            progressBarUpdater.execute(plUpNext);
+        }
+
         return rootView;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (progressBarUpdater != null) {
+            progressBarUpdater.cancel(true);
+            progressBarUpdater = null;
+        }
     }
 
     @Override
@@ -259,11 +285,13 @@ public class OverviewFrag extends Fragment {
         }
     }
 
-    class ProgressBarUpdater extends AsyncTask<PlayListItemBase, Integer, Void> {
+    class ProgressBarUpdater extends AsyncTask<PlayListItemBase, Void, Void> {
+        PlayListItemBase pli;
         @Override
         protected Void doInBackground(PlayListItemBase... pli) {
+            this.pli = pli[0];
             do {
-                publishProgress(pli[0].getProgress());
+                publishProgress();
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {}
@@ -272,8 +300,10 @@ public class OverviewFrag extends Fragment {
         }
 
         @Override
-        protected void onProgressUpdate(Integer... progress) {
-            playbackProgress.setProgress(progress[0]);
+        protected void onProgressUpdate(Void... unused) {
+            int progress = pli.getProgress();
+            playbackProgress.setProgress(progress);
+            //Log.d(TAG, "progress = " + progress[0]);
         }
     }
 }

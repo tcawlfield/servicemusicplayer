@@ -60,6 +60,7 @@ public class HymnPlayListItem extends PlayListItemBase {
         this.hymn = hymn;
         setTitle(hymn.title);
         setInfo("Tap to change");
+        stop();
         //mainCallback.onSongChoiceDone();
     }
 

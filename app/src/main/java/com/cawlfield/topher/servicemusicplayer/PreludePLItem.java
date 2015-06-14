@@ -2,14 +2,10 @@ package com.cawlfield.topher.servicemusicplayer;
 
 import android.app.Fragment;
 import android.content.Context;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -41,7 +37,10 @@ public class PreludePLItem extends PlayListItemBase {
     int endHour = 19;
     int endMinute = 30;
     Calendar waitingStarted;
+    Calendar finishWaitAt;
     Handler handler;
+    String lastWaitingInfo = null;
+    int waitMillis; // current duration to wait
 
     public PreludePLItem(MainActyCallbacks callback) {
         super(callback);
@@ -79,6 +78,7 @@ public class PreludePLItem extends PlayListItemBase {
         // TODO: info could show song length
         //mainCallback.onSongChoiceDone();
         nextSongIdx = 0;
+        stop();
     }
 
     @Override
@@ -115,12 +115,12 @@ public class PreludePLItem extends PlayListItemBase {
             Log.d(TAG, "First song, might wait to start...");
             // We might wait to start.
             Calendar now = Calendar.getInstance();
-            Calendar finishAt = Calendar.getInstance();
-            finishAt.set(Calendar.HOUR_OF_DAY, endHour);
-            finishAt.set(Calendar.MINUTE, endMinute);
-            finishAt.set(Calendar.SECOND, 0);
-            //Log.d(TAG, "finishAt.compareTo(now) = " + finishAt.compareTo(now));
-            int waitMillis = (int)(finishAt.getTimeInMillis() - now.getTimeInMillis()) - durationTotal;
+            finishWaitAt = Calendar.getInstance();
+            finishWaitAt.set(Calendar.HOUR_OF_DAY, endHour);
+            finishWaitAt.set(Calendar.MINUTE, endMinute);
+            finishWaitAt.set(Calendar.SECOND, 0);
+            //Log.d(TAG, "finishWaitAt.compareTo(now) = " + finishWaitAt.compareTo(now));
+            waitMillis = (int)(finishWaitAt.getTimeInMillis() - now.getTimeInMillis()) - durationTotal;
             Log.d(TAG, "waitMillis = " + waitMillis);
             if (waitMillis <= 0) {
                 return super.play(ct);
@@ -132,7 +132,8 @@ public class PreludePLItem extends PlayListItemBase {
                 waitIsOver = new WaitIsOver(ct);
                 handler.postDelayed(waitIsOver, waitMillis);
                 upNextCallback.setProgressMax(waitMillis);
-                setInfo("Waiting to start (" + MinSec.toString(waitMillis) + ")");
+                lastWaitingInfo = "Waiting to start (" + MinSec.toString(waitMillis) + ")";
+                setInfo(lastWaitingInfo);
                 upNextCallback.refreshPLI();
                 return true;
             }
@@ -164,7 +165,15 @@ public class PreludePLItem extends PlayListItemBase {
     public int getProgress() {
         if (waitingStarted != null) {
             Calendar now = Calendar.getInstance();
-            return (int) (now.getTimeInMillis() - waitingStarted.getTimeInMillis());
+            int timeLeft = (int) (finishWaitAt.getTimeInMillis() - now.getTimeInMillis());
+            String waitingInfo = "Waiting to start (" + MinSec.toString(timeLeft) + ")";
+            int timeSpent = (int) (now.getTimeInMillis() - waitingStarted.getTimeInMillis());
+            if (! waitingInfo.equals(lastWaitingInfo)) {
+                setInfo(lastWaitingInfo);
+                upNextCallback.refreshPLI();
+                lastWaitingInfo = waitingInfo;
+            }
+            return timeSpent;
         } else {
             return super.getProgress();
         }
@@ -174,8 +183,27 @@ public class PreludePLItem extends PlayListItemBase {
     public void stop() {
         if (waitingStarted != null && handler != null) {
             handler.removeCallbacks(waitIsOver);
+            waitingStarted = null;
         } else {
             super.stop();
+        }
+    }
+
+    @Override
+    public boolean isPlaying() {
+        if (waitingStarted != null) {
+            return true;
+        } else {
+            return super.isPlaying();
+        }
+    }
+
+    @Override
+    public int getDuration() {
+        if (waitingStarted != null) {
+            return waitMillis;
+        } else {
+            return super.getDuration();
         }
     }
 }

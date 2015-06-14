@@ -224,4 +224,18 @@ public abstract class PlayListItemBase {
         mediaPlayer = null;
     }
 
+    public boolean isPlaying() {
+        if (mediaPlayer == null) {
+            return false;
+        }
+        return mediaPlayer.isPlaying();
+    }
+
+    public int getDuration() {
+        if (mediaPlayer == null) {
+            return 100;
+        } else {
+            return mediaPlayer.getDuration();
+        }
+    }
 }
