@@ -190,6 +190,7 @@ public class OverviewFrag extends Fragment {
         @Override
         public void setProgressMax(int max) {
             playbackProgress.setMax(max);
+            Log.d(TAG, "Max progress: " + max);
         }
     }
 
