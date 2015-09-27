@@ -29,6 +29,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,7 +56,7 @@ public class OverviewFrag extends Fragment {
     Button playStop;
 
     List<PlayListItemBase> playList;
-    static PlayListItemBase plUpNext = null;
+    PlayListItemBase plUpNext = null;
     MySeqAdapter myseq;
     MyUpNextSelected myUpNextSelected = new MyUpNextSelected();
     MainActyCallbacks mainCallback;
@@ -63,6 +64,7 @@ public class OverviewFrag extends Fragment {
     ProgressBar playbackProgress;
     ProgressBarUpdater progressBarUpdater;
     AudioManager audioManager;
+    private Handler mHandler;
 
     public OverviewFrag() {
     }
@@ -70,13 +72,14 @@ public class OverviewFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "in onCreate()");
+        //Log.d(TAG, "in onCreate()");
+        mHandler = new Handler();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "in onCreateView");
+        //Log.d(TAG, "in onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_overview, container, false);
 
         for (PlayListItemBase pli : playList) {
@@ -140,17 +143,12 @@ public class OverviewFrag extends Fragment {
 
         musicPlaying = plUpNext.isPlaying();
         setPlayStopText();
-        if (progressBarUpdater != null) {
-            // should never happen because of onStop()
-            progressBarUpdater.cancel(true);
-        }
         if (musicPlaying) {
             int max = plUpNext.getDuration();
             Log.d(TAG, "Max progress: " + max);
             playbackProgress.setMax(max);
-            progressBarUpdater = new ProgressBarUpdater();
-            progressBarUpdater.execute(plUpNext);
         }
+        resetProgressBar(musicPlaying);
 
         return rootView;
     }
@@ -158,10 +156,7 @@ public class OverviewFrag extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        if (progressBarUpdater != null) {
-            progressBarUpdater.cancel(true);
-            progressBarUpdater = null;
-        }
+        resetProgressBar(false);
     }
 
     @Override
@@ -211,11 +206,7 @@ public class OverviewFrag extends Fragment {
             musicPlaying = false;
             setPlayStopText();
             incrementUpNext();
-            if (progressBarUpdater != null) {
-                progressBarUpdater.cancel(true);
-                progressBarUpdater = null;
-                playbackProgress.setProgress(0);
-            }
+            resetProgressBar(false);
         }
 
         @Override
@@ -240,23 +231,14 @@ public class OverviewFrag extends Fragment {
                 musicPlaying = false;
                 setPlayStopText();
                 incrementUpNext();
-                if (progressBarUpdater != null) {
-                    progressBarUpdater.cancel(true);
-                    progressBarUpdater = null;
-                    playbackProgress.setProgress(0);
-                }
+                resetProgressBar(false);
             } else {
                 if (null != plUpNext) {
                     boolean success = plUpNext.play(getActivity());
                     if (success) {
                         musicPlaying = true;
                         setPlayStopText();
-                        if (progressBarUpdater != null) {
-                            progressBarUpdater.cancel(true);
-                            playbackProgress.setProgress(0);
-                        }
-                        progressBarUpdater = new ProgressBarUpdater();
-                        progressBarUpdater.execute(plUpNext);
+                        resetProgressBar(true);
                     }
                 }
             }
@@ -285,11 +267,34 @@ public class OverviewFrag extends Fragment {
         }
     }
 
+    private void resetProgressBar(boolean restart) {
+        if (progressBarUpdater != null) {
+            progressBarUpdater.cancel(true);
+        }
+        //Log.d(TAG, "In resetProgressBar("+restart+")");
+        if (restart) {
+            // For unknown reasons, I have to execute this later.
+            // Or at least on the UI thread?
+            mHandler.post(new Runnable() {
+                public void run() {
+                    //Log.d(TAG, "Starting new ProgressBarUpdater");
+                    playbackProgress.setProgress(0);
+                    progressBarUpdater = new ProgressBarUpdater();
+                    //progressBarUpdater.execute(plUpNext);
+                    progressBarUpdater.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, plUpNext);
+                }
+            });
+        } else {
+            playbackProgress.setProgress(0);
+        }
+    }
+
     class ProgressBarUpdater extends AsyncTask<PlayListItemBase, Void, Void> {
         PlayListItemBase pli;
         @Override
         protected Void doInBackground(PlayListItemBase... pli) {
             this.pli = pli[0];
+            //Log.d(TAG, "ProgressBarUpdater.doInBackground()");
             do {
                 publishProgress();
                 try {
@@ -303,7 +308,7 @@ public class OverviewFrag extends Fragment {
         protected void onProgressUpdate(Void... unused) {
             int progress = pli.getProgress();
             playbackProgress.setProgress(progress);
-            //Log.d(TAG, "progress = " + progress[0]);
+            //Log.d(TAG, "progress = " + progress);
         }
     }
 }

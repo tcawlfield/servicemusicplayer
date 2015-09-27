@@ -165,7 +165,8 @@ public class PreludePLItem extends PlayListItemBase {
     public int getProgress() {
         if (waitingStarted != null) {
             Calendar now = Calendar.getInstance();
-            int timeLeft = (int) (finishWaitAt.getTimeInMillis() - now.getTimeInMillis());
+            int timeLeft = (int) (finishWaitAt.getTimeInMillis() - now.getTimeInMillis() - durationTotal);
+            //Log.d(TAG, "timeLeft = " + timeLeft);
             String waitingInfo = "Waiting to start (" + MinSec.toString(timeLeft) + ")";
             int timeSpent = (int) (now.getTimeInMillis() - waitingStarted.getTimeInMillis());
             if (! waitingInfo.equals(lastWaitingInfo)) {
