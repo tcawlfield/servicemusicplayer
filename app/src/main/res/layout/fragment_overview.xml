@@ -10,14 +10,16 @@
 
     <Button
         android:layout_width="fill_parent"
-        android:layout_height="@dimen/play_btn_height"
+        android:layout_height="wrap_content"
         android:text="Play"
         android:id="@+id/go_button"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:textSize="@dimen/play_btn_text_size"
-        android:layout_toStartOf="@+id/volume_up"
-        android:layout_marginEnd="20dp" />
+        android:layout_toLeftOf="@+id/volume_up"
+        android:layout_marginRight="10dp"
+        android:layout_alignParentLeft="true"
+        android:minHeight="@dimen/play_btn_height" />
 
     <ListView
         android:layout_width="fill_parent"
@@ -29,26 +31,53 @@
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/progress_bar"
         android:layout_centerHorizontal="true"
-        android:layout_above="@+id/go_button" />
+        android:layout_above="@+id/go_button"
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/timeRemainingTV" />
 
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/volume_up"
-        android:layout_below="@+id/progress_bar"
+        android:layout_below="@+id/timeRemainingTV"
         android:background="@drawable/volume_up"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true" />
 
     <ImageButton
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/volume_down"
         android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="false"
+        android:background="@drawable/volume_down"
+        android:layout_alignParentRight="true" />
+
+    <TextView
+        android:layout_width="45sp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="88:88"
+        android:id="@+id/timeRemainingTV"
+        android:layout_below="@+id/trackList"
         android:layout_alignParentEnd="true"
-        android:background="@drawable/volume_down" />
+        android:gravity="right"
+        android:layout_marginBottom="2dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="8/8"
+        android:id="@+id/volumeTV"
+        android:layout_below="@+id/volume_up"
+        android:layout_alignParentEnd="true"
+        android:layout_alignLeft="@+id/volume_up"
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_above="@+id/volume_down" />
 
 </RelativeLayout>

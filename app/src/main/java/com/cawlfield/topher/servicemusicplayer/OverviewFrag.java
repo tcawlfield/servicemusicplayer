@@ -31,6 +31,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -50,10 +52,15 @@ import java.util.List;
  * A fragment containing a simple view.
  */
 public class OverviewFrag extends Fragment {
-    private static String TAG = "OverviewFrag";
+    private static final String TAG = "OverviewFrag";
+    private static final String TIME_REMAINING_NULL = "--";
 
     ListView lv;
     Button playStop;
+    ProgressBar playbackProgress;
+    TextView timeRemainingTV;
+    TextView volumeTV;
+    ImageButton volumeUp, volumeDown;
 
     List<PlayListItemBase> playList;
     PlayListItemBase plUpNext = null;
@@ -61,10 +68,10 @@ public class OverviewFrag extends Fragment {
     MyUpNextSelected myUpNextSelected = new MyUpNextSelected();
     MainActyCallbacks mainCallback;
     boolean musicPlaying = false;
-    ProgressBar playbackProgress;
     ProgressBarUpdater progressBarUpdater;
     AudioManager audioManager;
     private Handler mHandler;
+    private int maxVolume;
 
     public OverviewFrag() {
     }
@@ -94,6 +101,8 @@ public class OverviewFrag extends Fragment {
         lv = (ListView) rootView.findViewById(R.id.trackList);
         playStop = (Button) rootView.findViewById(R.id.go_button);
         playbackProgress = (ProgressBar) rootView.findViewById(R.id.progress_bar);
+        timeRemainingTV = (TextView) rootView.findViewById(R.id.timeRemainingTV);
+        volumeTV = (TextView) rootView.findViewById(R.id.volumeTV);
 
         myseq = new MySeqAdapter(getActivity(), playList);
         lv.setAdapter(myseq);
@@ -126,29 +135,22 @@ public class OverviewFrag extends Fragment {
 
         playStop.setOnClickListener(new PlayStopListener());
 
-        ImageButton vu = (ImageButton) rootView.findViewById(R.id.volume_up);
-        ImageButton vd = (ImageButton) rootView.findViewById(R.id.volume_down);
-        vu.setOnClickListener(new View.OnClickListener() {
+        volumeUp = (ImageButton) rootView.findViewById(R.id.volume_up);
+        volumeDown = (ImageButton) rootView.findViewById(R.id.volume_down);
+        volumeUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+                volumeUpOrDown(true);
+                volumeUp.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             }
         });
-        vd.setOnClickListener(new View.OnClickListener() {
+        volumeDown.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0);
+                volumeUpOrDown(false);
+                volumeDown.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             }
         });
-
-        musicPlaying = plUpNext.isPlaying();
-        setPlayStopText();
-        if (musicPlaying) {
-            int max = plUpNext.getDuration();
-            Log.d(TAG, "Max progress: " + max);
-            playbackProgress.setMax(max);
-        }
-        resetProgressBar(musicPlaying);
 
         return rootView;
     }
@@ -167,6 +169,22 @@ public class OverviewFrag extends Fragment {
         playList = mainCallback.getPlayList();
 
         audioManager = (AudioManager)activity.getSystemService(Context.AUDIO_SERVICE);
+        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        musicPlaying = plUpNext.isPlaying();
+        setPlayStopText();
+        if (musicPlaying) {
+            int max = plUpNext.getDuration();
+            Log.d(TAG, "Max progress: " + max);
+            playbackProgress.setMax(max);
+        }
+        resetProgressBar(musicPlaying);
+        setVolumeTV();
     }
 
     class MySeqAdapter extends ArrayAdapter<PlayListItemBase> {
@@ -267,6 +285,17 @@ public class OverviewFrag extends Fragment {
         }
     }
 
+    private void volumeUpOrDown(boolean up) {
+        int direction = up ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
+        audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0);
+        setVolumeTV();
+    }
+
+    private void setVolumeTV() {
+        int newVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        volumeTV.setText(newVolume + " / " + maxVolume);
+    }
+
     private void resetProgressBar(boolean restart) {
         if (progressBarUpdater != null) {
             progressBarUpdater.cancel(true);
@@ -286,6 +315,7 @@ public class OverviewFrag extends Fragment {
             });
         } else {
             playbackProgress.setProgress(0);
+            timeRemainingTV.setText(TIME_REMAINING_NULL);
         }
     }
 
@@ -308,6 +338,8 @@ public class OverviewFrag extends Fragment {
         protected void onProgressUpdate(Void... unused) {
             int progress = pli.getProgress();
             playbackProgress.setProgress(progress);
+            String timeRemaining = MinSec.toString(playbackProgress.getMax() - progress);
+            timeRemainingTV.setText(timeRemaining);
             //Log.d(TAG, "progress = " + progress);
         }
     }

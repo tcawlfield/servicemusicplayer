@@ -3,6 +3,6 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="play_btn_height">20mm</dimen>
-    <dimen name="play_btn_text_size">10mm</dimen>
+    <dimen name="play_btn_text_size">110dp</dimen>
     <dimen name="chooser_header_size">12pt</dimen>
 </resources>
