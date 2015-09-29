@@ -58,8 +58,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
     TextView endTimeTV;
     ListView preludeLV;
     Button okayBtn;
-    Button randomizeBtn;
-    TextView upToTime;
+    //Button randomizeBtn;
+    //TextView upToTime;
     Button addBtn;
     Button delBtn;
     ImageButton mvUpBtn;
@@ -110,8 +110,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
         endTimeTV = (TextView) rootView.findViewById(R.id.end_time);
         preludeLV = (ListView) rootView.findViewById(R.id.prelude_list);
         okayBtn = (Button) rootView.findViewById(R.id.okay_button);
-        randomizeBtn = (Button) rootView.findViewById(R.id.randomize_btn);
-        upToTime = (TextView) rootView.findViewById(R.id.up_to_time);
+        //randomizeBtn = (Button) rootView.findViewById(R.id.randomize_btn);
+        //upToTime = (TextView) rootView.findViewById(R.id.up_to_time);
         addBtn = (Button) rootView.findViewById(R.id.add_btn);
         delBtn = (Button) rootView.findViewById(R.id.remove_btn);
         mvUpBtn = (ImageButton) rootView.findViewById(R.id.move_up);
@@ -125,8 +125,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
 
         endTimeTV.setOnClickListener(this);
         okayBtn.setOnClickListener(this);
-        randomizeBtn.setOnClickListener(this);
-        upToTime.setOnClickListener(this);
+        //randomizeBtn.setOnClickListener(this);
+        //upToTime.setOnClickListener(this);
         addBtn.setOnClickListener(this);
         delBtn.setOnClickListener(this);
         mvUpBtn.setOnClickListener(this);
@@ -163,7 +163,7 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
         handler.post(updateListRunnable);
 
         updateStartTime();
-        updateUpToTime();
+        //updateUpToTime();
         updateTotalTime();
         songPlayer.fragmentStarting();
     }
@@ -182,8 +182,8 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
             moveSong(true);
         } else if (view == mvDownBtn) {
             moveSong(false);
-        } else if (view == upToTime) {
-            showUpToTimePickerDialog();
+        //} else if (view == upToTime) {
+        //    showUpToTimePickerDialog();
         }
     }
 
@@ -295,9 +295,9 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
         endTimeTV.setText(df.format(cal.getTime()));
     }
 
-    void updateUpToTime() {
-        upToTime.setText(MinSec.toString(targetDurSeconds * 1000));
-    }
+    //void updateUpToTime() {
+    //    upToTime.setText(MinSec.toString(targetDurSeconds * 1000));
+    //}
 
     void updateTotalTime() {
         int millis = 0;
@@ -307,9 +307,9 @@ public class PreludeChoice extends Fragment implements View.OnClickListener, Ada
         totalTime.setText(MinSec.toString(millis));
     }
 
-    void showUpToTimePickerDialog() {
+    //void showUpToTimePickerDialog() {
 
-    }
+    //}
 
     void addThisSong(Song song) {
         if (songList == null) {

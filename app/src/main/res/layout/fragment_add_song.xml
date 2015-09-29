@@ -36,7 +36,7 @@
         android:id="@+id/song_choice"
         android:layout_weight="1"
         android:clickable="true"
-        android:choiceMode="multipleChoice"
+        android:choiceMode="singleChoice"
         android:listSelector="@android:drawable/list_selector_background"
         android:minHeight="200dp" />
 

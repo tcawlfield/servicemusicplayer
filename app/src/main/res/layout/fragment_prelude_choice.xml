@@ -83,6 +83,7 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true" />
 
+    <!--
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -114,6 +115,7 @@
         android:layout_toEndOf="@+id/upto"
         android:layout_alignBaseline="@+id/upto"
         android:background="@color/dark_bkg" />
+        -->
 
     <LinearLayout
         android:orientation="horizontal"
@@ -122,14 +124,14 @@
         android:id="@+id/affect_list"
         android:layout_alignParentLeft="false"
         android:layout_alignParentRight="false"
-        android:layout_above="@+id/randomize_btn"
+        android:layout_above="@+id/okay_button"
         android:layout_alignParentEnd="true"
         android:layout_alignParentStart="true"
         android:gravity="center_horizontal">
 
         <Space
-            android:layout_width="20px"
-            android:layout_height="20px"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
             android:layout_weight="1" />
 
         <Button
@@ -166,9 +168,6 @@
         <LinearLayout
             android:orientation="vertical"
             android:id="@+id/updown"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
-            android:layout_above="@+id/randomize_btn"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content">
 
@@ -187,8 +186,8 @@
         </LinearLayout>
 
         <Space
-            android:layout_width="4px"
-            android:layout_height="4px"
+            android:layout_width="4dp"
+            android:layout_height="4dp"
             android:layout_weight="1" />
 
         <TextView
